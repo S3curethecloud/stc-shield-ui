@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>STC Copilot</title>
+  <link rel="stylesheet" href="/css/shield.css" />
+</head>
+
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <strong>STC Copilot</strong>
+
+    <nav>
+      <a href="/shield/">Shield</a>
+      <a href="/riskdna/">RiskDNA</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <h1>Copilot Intelligence</h1>
+  <p class="muted">Deterministic explanation of runtime decisions</p>
+
+  <div class="card" id="copilot-output">
+    <p class="muted">Analyzing decision...</p>
+  </div>
+
+</main>
+
+<script>
+const output = document.getElementById("copilot-output");
+
+// pull last decision (we will store this in next step)
+const decision = JSON.parse(localStorage.getItem("lastDecision"));
+
+function generateExplanation(data) {
+  if (!data) {
+    return "No decision data available.";
+  }
+
+  if (data.allow === false) {
+    return `
+      Access denied due to elevated risk signals.
+      The system detected policy constraints triggered by risk evaluation.
+      Recommended action: review obligations and reduce risk score.
+    `;
+  }
+
+  return `
+    Access granted. Risk signals are within acceptable thresholds.
+    Session issued successfully with enforced controls.
+  `;
+}
+
+output.innerHTML = `
+  <h3>Decision Summary</h3>
+  <p>${generateExplanation(decision)}</p>
+
+  <hr/>
+
+  <pre>${JSON.stringify(decision, null, 2)}</pre>
+`;
+</script>
+
+</body>
+</html>

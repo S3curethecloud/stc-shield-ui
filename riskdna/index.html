@@ -18,6 +18,10 @@
   ← Back to Shield
 </a>
 
+<a href="/copilot/" style="margin-left:20px;color:#00ffd0;">
+  → Explain with Copilot
+</a>
+
 <header class="topbar">
   <div class="container topbar__inner">
     <a class="brand" href="/">
@@ -124,6 +128,8 @@ async function runAnalysis() {
     });
 
     const result = await response.json();
+
+    localStorage.setItem("lastDecision", JSON.stringify(result));
 
     if (response.status === 403) {
       output.innerHTML = `
