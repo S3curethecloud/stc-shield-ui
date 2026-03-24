@@ -1,14 +1,182 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SecureTheCloud</title>
+
+  <!-- GLOBAL STYLE -->
+  <link rel="stylesheet" href="/assets/css/stc.css">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b1220;
+      color: #e6edf3;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* NAV */
+    .nav {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 20px;
+    }
+
+    .nav a:hover {
+      color: #00ffd0;
+    }
+
+    /* HERO */
+    .hero {
+      margin-top: 40px;
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: #94a3b8;
+    }
+
+    /* CARDS */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      padding: 20px;
+      border-radius: 12px;
+      transition: 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: #00ffd0;
+      transform: translateY(-4px);
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .card p {
+      color: #94a3b8;
+    }
+
+    .card a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #00ffd0;
+      text-decoration: none;
+    }
+
+    /* FOOTER */
+    footer {
+      margin-top: 80px;
+      text-align: center;
+      color: #64748b;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>STC Root</h1>
-  <ul>
-    <li><a href="/shield/">Shield</a></li>
-    <li><a href="/riskdna/">RiskDNA</a></li>
-    <li><a href="/copilot/">Copilot</a></li>
-  </ul>
+
+<!-- NAVBAR -->
+<header class="nav">
+  <div class="nav-inner">
+    <strong>SecureTheCloud</strong>
+
+    <nav>
+      <a href="/shield/">Shield</a>
+      <a href="/riskdna/">RiskDNA</a>
+      <a href="/copilot/">Copilot</a>
+      <a href="/labs/">Labs</a>
+    </nav>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>Zero Trust Runtime Control Surface</h1>
+    <p>
+      Deterministic authorization. Signal-driven enforcement.
+      Runtime visibility across identity, risk, and policy.
+    </p>
+  </section>
+
+  <!-- CARDS -->
+  <section class="grid">
+
+    <!-- SHIELD -->
+    <div class="card">
+      <h3>🛡 Shield</h3>
+      <p>
+        Real-time enforcement engine. Visualize decisions,
+        blast radius, and control flow.
+      </p>
+      <a href="/shield/">Open Shield →</a>
+    </div>
+
+    <!-- RISDNA -->
+    <div class="card">
+      <h3>🧠 RiskDNA</h3>
+      <p>
+        Deterministic risk scoring with full breakdown:
+        identity, topology, behavior, and policy signals.
+      </p>
+      <a href="/riskdna/">Run Analysis →</a>
+    </div>
+
+    <!-- COPILOT -->
+    <div class="card">
+      <h3>🤖 Copilot</h3>
+      <p>
+        Explain decisions. Translate policy outcomes
+        into executive and operator insights.
+      </p>
+      <a href="/copilot/">Explain Decision →</a>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    SecureTheCloud • Zero Trust Runtime • Deterministic Governance
+  </p>
+</footer>
+
 </body>
 </html>
