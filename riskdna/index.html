@@ -18,9 +18,6 @@
   ← Back to Shield
 </a>
 
-<!-- ====================================== -->
-<!-- CANONICAL TOPBAR (SHARED ACROSS ALL) -->
-<!-- ====================================== -->
 <header class="topbar">
   <div class="container topbar__inner">
     <a class="brand" href="/">
@@ -47,12 +44,8 @@
   </div>
 </header>
 
-<!-- ============================ -->
-<!-- RISKDNA MODULE (PHASE 1) -->
-<!-- ============================ -->
 <main class="container module">
 
-  <!-- Standard Module Hero (Consistent Scale) -->
   <section class="module__hero">
     <div class="eyebrow">STC Module</div>
     <h1>RiskDNA</h1>
@@ -61,7 +54,6 @@
     </p>
   </section>
 
-  <!-- Module Content Grid -->
   <section class="module__grid">
 
     <div class="card">
@@ -105,7 +97,11 @@ async function runAnalysis() {
     return;
   }
 
-  output.innerHTML = "<p class='muted'>Running analysis...</p>";
+  output.innerHTML = `
+    <div class="card">
+      <p class="muted">Analyzing identity risk...</p>
+    </div>
+  `;
 
   try {
     const response = await fetch("https://ztr-runtime.fly.dev/v1/tokens/issue", {
@@ -131,19 +127,34 @@ async function runAnalysis() {
 
     if (response.status === 403) {
       output.innerHTML = `
-        <h3>❌ ACCESS DENIED</h3>
-        <p><strong>Reason:</strong> ${result.detail?.error || "policy_denied"}</p>
+        <div class="status deny">❌ ACCESS DENIED</div>
+
         <p><strong>Risk Score:</strong> ${result.detail?.risk_score}</p>
+
+        <div class="risk-box">
+          <p><strong>RiskDNA Breakdown</strong></p>
+          <div class="bar">
+            <div class="bar-fill" style="width:${result.detail?.risk_score}%; background:#ff4d4d;"></div>
+          </div>
+        </div>
+
         <pre>${JSON.stringify(result.detail?.opa_result, null, 2)}</pre>
       `;
       return;
     }
 
     output.innerHTML = `
-      <h3>✅ ACCESS GRANTED</h3>
+      <div class="status allow">✅ ACCESS GRANTED</div>
+
       <p><strong>Session:</strong> ${result.session_id}</p>
-      <p><strong>Expires In:</strong> ${result.expires_in}s</p>
-      <p><strong>Principal:</strong> ${result.principal}</p>
+      <p><strong>Expires:</strong> ${result.expires_in}s</p>
+
+      <div class="risk-box">
+        <p><strong>RiskDNA Score</strong></p>
+        <div class="bar">
+          <div class="bar-fill" style="width:30%; background:#00ff88;"></div>
+        </div>
+      </div>
     `;
 
   } catch (err) {

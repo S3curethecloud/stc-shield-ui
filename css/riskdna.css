@@ -1,3 +1,49 @@
 h1 {
   margin-top: 0;
 }
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 40px;
+}
+
+.card {
+  background: #12182a;
+  padding: 25px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.status {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.allow {
+  color: #00ff88;
+}
+
+.deny {
+  color: #ff4d4d;
+}
+
+.risk-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #0f1629;
+  border-radius: 8px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 5px;
+  margin-top: 8px;
+  background: #222;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 5px;
+}
