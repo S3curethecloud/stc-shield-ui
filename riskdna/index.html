@@ -99,23 +99,62 @@
 const data = JSON.parse(localStorage.getItem("selectedFinding"));
 const output = document.getElementById("risk-output");
 
-if (data) {
-  output.innerHTML = `
-    <h3>Finding: ${data.id}</h3>
-    <p><strong>Risk Score:</strong> ${data.risk}</p>
+async function runAnalysis() {
+  if (!data) {
+    output.innerHTML = "<p>No data received</p>";
+    return;
+  }
 
-    <hr/>
+  output.innerHTML = "<p class='muted'>Running analysis...</p>";
 
-    <p><strong>Signal Breakdown:</strong></p>
-    <ul>
-      <li>Identity Risk: ${data.risk > 60 ? "HIGH" : "MEDIUM"}</li>
-      <li>Behavior: Normal</li>
-      <li>Velocity: Low</li>
-    </ul>
-  `;
-} else {
-  output.innerHTML = "<p>No data received</p>";
+  try {
+    const response = await fetch("https://ztr-runtime.fly.dev/v1/tokens/issue", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Stc-Api-Key": "FCn017yGzG5Y7zv3HcZUg03vcNYfHNCXpnEWBOMPXr0"
+      },
+      body: JSON.stringify({
+        principal: "agent-demo",
+        intent: "refund:create",
+        scopes: ["refund:create"],
+        ttl_seconds: 300,
+        context: {
+          device_trust: true,
+          session_binding: "device-demo",
+          after_hours: false
+        }
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.status === 403) {
+      output.innerHTML = `
+        <h3>❌ ACCESS DENIED</h3>
+        <p><strong>Reason:</strong> ${result.detail?.error || "policy_denied"}</p>
+        <p><strong>Risk Score:</strong> ${result.detail?.risk_score}</p>
+        <pre>${JSON.stringify(result.detail?.opa_result, null, 2)}</pre>
+      `;
+      return;
+    }
+
+    output.innerHTML = `
+      <h3>✅ ACCESS GRANTED</h3>
+      <p><strong>Session:</strong> ${result.session_id}</p>
+      <p><strong>Expires In:</strong> ${result.expires_in}s</p>
+      <p><strong>Principal:</strong> ${result.principal}</p>
+    `;
+
+  } catch (err) {
+    output.innerHTML = `
+      <h3>⚠️ ERROR</h3>
+      <p>${err.message}</p>
+    `;
+  }
 }
+
+runAnalysis();
 </script>
 
 </body>
