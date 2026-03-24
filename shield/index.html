@@ -62,25 +62,21 @@
 
 <script>
 const findings = document.querySelectorAll("#findings-list li");
-const contextPanel = document.getElementById("context-panel");
 
 findings.forEach(item => {
   item.addEventListener("click", () => {
 
-    // remove active state
-    findings.forEach(f => f.classList.remove("active"));
-
-    // add active
-    item.classList.add("active");
-
     const id = item.dataset.id;
     const risk = item.dataset.risk;
 
-    contextPanel.innerHTML = `
-      <p><strong>Finding ID:</strong> ${id}</p>
-      <p><strong>Risk Score:</strong> ${risk}</p>
-      <p class="muted">Click to analyze deeper in RiskDNA</p>
-    `;
+    // store selected finding
+    localStorage.setItem("selectedFinding", JSON.stringify({
+      id,
+      risk
+    }));
+
+    // redirect to RiskDNA
+    window.location.href = "/riskdna/";
   });
 });
 </script>

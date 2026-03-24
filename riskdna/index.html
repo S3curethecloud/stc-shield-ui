@@ -82,5 +82,25 @@
 
 </main>
 
+<div class="container">
+  <h1>RiskDNA Analysis</h1>
+  <div id="risk-output"></div>
+</div>
+
+<script>
+const data = JSON.parse(localStorage.getItem("selectedFinding"));
+
+const output = document.getElementById("risk-output");
+
+if (data) {
+  output.innerHTML = `
+    <p><strong>Finding:</strong> ${data.id}</p>
+    <p><strong>Risk Score:</strong> ${data.risk}</p>
+  `;
+} else {
+  output.innerHTML = "<p>No data received</p>";
+}
+</script>
+
 </body>
 </html>
