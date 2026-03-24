@@ -26,7 +26,7 @@
   <section class="consolebar">
     <div>
       <h1>Shield Console</h1>
-      <p class="muted">Real-time identity attack path analysis</p>
+      <p class="muted">Identity attack-path visibility</p>
     </div>
   </section>
 
@@ -35,28 +35,55 @@
     <!-- LEFT -->
     <aside class="card">
       <h3>Findings</h3>
-      <ul>
-        <li>⚠️ Privileged role escalation</li>
-        <li>⚠️ Cross-account trust chain</li>
-        <li>⚠️ Suspicious refund path</li>
+      <ul id="findings-list">
+        <li data-id="f1" data-risk="72">⚠️ Privileged role escalation</li>
+        <li data-id="f2" data-risk="65">⚠️ Cross-account trust chain</li>
+        <li data-id="f3" data-risk="43">⚠️ Suspicious refund path</li>
       </ul>
     </aside>
 
     <!-- CENTER -->
     <section class="card">
-      <h3>Attack Map</h3>
-      <p class="muted">Graph visualization (coming next)</p>
+      <h3>Main Canvas</h3>
+      <p class="muted">Graph / table will render here</p>
     </section>
 
     <!-- RIGHT -->
     <aside class="card">
       <h3>Context</h3>
-      <p class="muted">Select a finding to inspect risk</p>
+      <div id="context-panel">
+        <p class="muted">Select a finding to inspect risk</p>
+      </div>
     </aside>
 
   </section>
 
 </main>
+
+<script>
+const findings = document.querySelectorAll("#findings-list li");
+const contextPanel = document.getElementById("context-panel");
+
+findings.forEach(item => {
+  item.addEventListener("click", () => {
+
+    // remove active state
+    findings.forEach(f => f.classList.remove("active"));
+
+    // add active
+    item.classList.add("active");
+
+    const id = item.dataset.id;
+    const risk = item.dataset.risk;
+
+    contextPanel.innerHTML = `
+      <p><strong>Finding ID:</strong> ${id}</p>
+      <p><strong>Risk Score:</strong> ${risk}</p>
+      <p class="muted">Click to analyze deeper in RiskDNA</p>
+    `;
+  });
+});
+</script>
 
 </body>
 </html>
