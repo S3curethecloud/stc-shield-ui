@@ -2,26 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>STC Shield</title>
+  <title>SecureTheCloud</title>
   <link rel="stylesheet" href="/css/shield.css" />
+  <link rel="stylesheet" href="/assets/css/stc.css">
 </head>
 
 <body>
 
-<!-- 🔥 MINIMAL NAV (STRICT RULE APPLIED) -->
 <header class="nav">
   <div class="nav-inner">
-    <strong>Cloudflare Compliance</strong>
+    <strong>SecureTheCloud</strong>
 
     <nav>
+      <a href="/">Home</a>
+      <a href="/shield/">Shield</a>
       <a href="/riskdna/">RiskDNA</a>
       <a href="/copilot/">Copilot</a>
-      <a href="/copilot/">Copilot</a>   
- </nav>
+    </nav>
   </div>
 </header>
 
-<!-- 🔥 MAIN CONTAINER -->
 <main class="container">
 
   <section class="consolebar">
@@ -33,7 +33,6 @@
 
   <section class="console-layout">
 
-    <!-- LEFT -->
     <aside class="card">
       <h3>Findings</h3>
       <ul id="findings-list">
@@ -43,13 +42,11 @@
       </ul>
     </aside>
 
-    <!-- CENTER -->
     <section class="card">
       <h3>Main Canvas</h3>
       <p class="muted">Graph / table will render here</p>
     </section>
 
-    <!-- RIGHT -->
     <aside class="card">
       <h3>Context</h3>
       <div id="context-panel">
@@ -61,6 +58,12 @@
 
 </main>
 
+<footer>
+  <p>
+    SecureTheCloud • Zero Trust Runtime • Deterministic Governance
+  </p>
+</footer>
+
 <script>
 const findings = document.querySelectorAll("#findings-list li");
 
@@ -70,13 +73,11 @@ findings.forEach(item => {
     const id = item.dataset.id;
     const risk = item.dataset.risk;
 
-    // store selected finding
     localStorage.setItem("selectedFinding", JSON.stringify({
       id,
       risk
     }));
 
-    // redirect to RiskDNA
     window.location.href = "/riskdna/";
   });
 });
