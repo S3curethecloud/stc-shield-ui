@@ -14,6 +14,10 @@
 </head>
 <body>
 
+<a href="/shield/" style="display:inline-block;margin-bottom:20px;color:#00ffd0;">
+  ← Back to Shield
+</a>
+
 <!-- ====================================== -->
 <!-- CANONICAL TOPBAR (SHARED ACROSS ALL) -->
 <!-- ====================================== -->
@@ -84,18 +88,30 @@
 
 <div class="container">
   <h1>RiskDNA Analysis</h1>
-  <div id="risk-output"></div>
+  <p class="muted">Deep inspection of identity risk signals</p>
+
+  <div class="card">
+    <div id="risk-output"></div>
+  </div>
 </div>
 
 <script>
 const data = JSON.parse(localStorage.getItem("selectedFinding"));
-
 const output = document.getElementById("risk-output");
 
 if (data) {
   output.innerHTML = `
-    <p><strong>Finding:</strong> ${data.id}</p>
+    <h3>Finding: ${data.id}</h3>
     <p><strong>Risk Score:</strong> ${data.risk}</p>
+
+    <hr/>
+
+    <p><strong>Signal Breakdown:</strong></p>
+    <ul>
+      <li>Identity Risk: ${data.risk > 60 ? "HIGH" : "MEDIUM"}</li>
+      <li>Behavior: Normal</li>
+      <li>Velocity: Low</li>
+    </ul>
   `;
 } else {
   output.innerHTML = "<p>No data received</p>";
