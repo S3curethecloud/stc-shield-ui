@@ -69,3 +69,12 @@ body {
   background: #2a3a6a;
   color: #00ffd0;
 }
+
+#findings-list li {
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+#findings-list li:hover {
+  color: #00ffd0;
+}

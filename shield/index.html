@@ -33,24 +33,33 @@
 
   <section class="console-layout">
 
-    <aside class="card">
-      <h3>Findings</h3>
-      <ul id="findings-list">
-        <li data-id="f1" data-risk="72">⚠️ Privileged role escalation</li>
-        <li data-id="f2" data-risk="65">⚠️ Cross-account trust chain</li>
-        <li data-id="f3" data-risk="43">⚠️ Suspicious refund path</li>
-      </ul>
+    <aside>
+      <div class="card">
+        <h3>Findings</h3>
+
+        <ul id="findings-list">
+          <li onclick="selectFinding('privilege')">⚠️ Privileged role escalation</li>
+          <li onclick="selectFinding('cross-account')">⚠️ Cross-account trust chain</li>
+          <li onclick="selectFinding('refund')">⚠️ Suspicious refund path</li>
+        </ul>
+      </div>
     </aside>
 
-    <section class="card">
-      <h3>Main Canvas</h3>
-      <p class="muted">Graph / table will render here</p>
+    <section>
+      <div class="card">
+        <h3>Main Canvas</h3>
+        <div id="canvas-output" class="muted">
+          Select a finding to visualize attack path
+        </div>
+      </div>
     </section>
 
-    <aside class="card">
-      <h3>Context</h3>
-      <div id="context-panel">
-        <p class="muted">Select a finding to inspect risk</p>
+    <aside>
+      <div class="card">
+        <h3>Context</h3>
+        <div id="context-output" class="muted">
+          Waiting for selection...
+        </div>
       </div>
     </aside>
 
@@ -65,22 +74,49 @@
 </footer>
 
 <script>
-const findings = document.querySelectorAll("#findings-list li");
+function selectFinding(type) {
+  const canvas = document.getElementById("canvas-output");
+  const context = document.getElementById("context-output");
 
-findings.forEach(item => {
-  item.addEventListener("click", () => {
+  if (type === "privilege") {
+    canvas.innerHTML = `
+      <pre>
+User → IAM Role → Admin Policy → Full Access
+      </pre>
+    `;
 
-    const id = item.dataset.id;
-    const risk = item.dataset.risk;
+    context.innerHTML = `
+      <p><strong>Risk:</strong> High</p>
+      <p>Privilege escalation path detected via IAM role assumption.</p>
+    `;
+  }
 
-    localStorage.setItem("selectedFinding", JSON.stringify({
-      id,
-      risk
-    }));
+  if (type === "cross-account") {
+    canvas.innerHTML = `
+      <pre>
+Account A → Role Trust → Account B → Sensitive Resource
+      </pre>
+    `;
 
-    window.location.href = "/riskdna/";
-  });
-});
+    context.innerHTML = `
+      <p><strong>Risk:</strong> Medium</p>
+      <p>Cross-account access chain increases blast radius.</p>
+    `;
+  }
+
+  if (type === "refund") {
+    canvas.innerHTML = `
+      <pre>
+Agent → Refund API → Payment DB → Ledger Write
+      </pre>
+    `;
+
+    context.innerHTML = `
+      <p><strong>Risk:</strong> Critical</p>
+      <p>Refund path exposes financial system and audit chain.</p>
+    `;
+  }
+}
 </script>
 
 </body>
