@@ -78,44 +78,74 @@ function selectFinding(type) {
   const canvas = document.getElementById("canvas-output");
   const context = document.getElementById("context-output");
 
+  let payload = {};
+
   if (type === "privilege") {
     canvas.innerHTML = `
-      <pre>
-User → IAM Role → Admin Policy → Full Access
-      </pre>
+      <pre>User → IAM Role → Admin Policy → Full Access</pre>
     `;
 
     context.innerHTML = `
       <p><strong>Risk:</strong> High</p>
-      <p>Privilege escalation path detected via IAM role assumption.</p>
+      <p>Privilege escalation path detected.</p>
     `;
+
+    payload = {
+      principal: "agent-demo",
+      intent: "role:escalate",
+      context: {
+        device_trust: false,
+        session_binding: "device-x",
+        after_hours: true
+      }
+    };
   }
 
   if (type === "cross-account") {
     canvas.innerHTML = `
-      <pre>
-Account A → Role Trust → Account B → Sensitive Resource
-      </pre>
+      <pre>Account A → Trust → Account B → Sensitive Resource</pre>
     `;
 
     context.innerHTML = `
       <p><strong>Risk:</strong> Medium</p>
-      <p>Cross-account access chain increases blast radius.</p>
+      <p>Cross-account access expands blast radius.</p>
     `;
+
+    payload = {
+      principal: "agent-demo",
+      intent: "assume:role",
+      context: {
+        device_trust: true,
+        session_binding: "device-y",
+        after_hours: false
+      }
+    };
   }
 
   if (type === "refund") {
     canvas.innerHTML = `
-      <pre>
-Agent → Refund API → Payment DB → Ledger Write
-      </pre>
+      <pre>Agent → Refund API → Payment DB → Ledger</pre>
     `;
 
     context.innerHTML = `
       <p><strong>Risk:</strong> Critical</p>
-      <p>Refund path exposes financial system and audit chain.</p>
+      <p>Financial blast radius detected.</p>
     `;
+
+    payload = {
+      principal: "agent-demo",
+      intent: "refund:create",
+      context: {
+        device_trust: true,
+        session_binding: "device-demo",
+        after_hours: false
+      }
+    };
   }
+
+  localStorage.setItem("selectedFinding", JSON.stringify(payload));
+
+  window.location.href = "/riskdna/";
 }
 </script>
 
