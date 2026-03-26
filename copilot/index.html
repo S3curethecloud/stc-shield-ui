@@ -31,38 +31,42 @@
 </main>
 
 <script>
-const output = document.getElementById("copilot-output");
+async function runCopilot() {
+  const data = JSON.parse(localStorage.getItem("lastDecision"));
 
-// pull last decision (we will store this in next step)
-const decision = JSON.parse(localStorage.getItem("lastDecision"));
-
-function generateExplanation(data) {
   if (!data) {
-    return "No decision data available.";
+    document.getElementById("copilot-output").innerHTML =
+      "<p>No decision data available</p>";
+    return;
   }
 
-  if (data.allow === false) {
-    return `
-      Access denied due to elevated risk signals.
-      The system detected policy constraints triggered by risk evaluation.
-      Recommended action: review obligations and reduce risk score.
+  try {
+    const res = await fetch("https://copilot-engine.fly.dev/ask/explain", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question: "Explain this decision",
+        context: data,
+        mode: "copilot"
+      })
+    });
+
+    const result = await res.json();
+
+    document.getElementById("copilot-output").innerHTML = `
+      <h3>Copilot Response</h3>
+      <p>${result.answer || "No explanation returned"}</p>
     `;
-  }
 
-  return `
-    Access granted. Risk signals are within acceptable thresholds.
-    Session issued successfully with enforced controls.
-  `;
+  } catch (err) {
+    document.getElementById("copilot-output").innerHTML =
+      `<p>Error: ${err.message}</p>`;
+  }
 }
 
-output.innerHTML = `
-  <h3>Decision Summary</h3>
-  <p>${generateExplanation(decision)}</p>
-
-  <hr/>
-
-  <pre>${JSON.stringify(decision, null, 2)}</pre>
-`;
+runCopilot();
 </script>
 
 </body>
