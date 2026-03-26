@@ -143,9 +143,14 @@ function selectFinding(type) {
     };
   }
 
+  // Persist finding
   localStorage.setItem("selectedFinding", JSON.stringify(payload));
 
-  window.location.href = "/riskdna/";
+  // 🔥 OPTIONAL UX ENHANCEMENT — DIRECT COPILOT HANDOFF
+  localStorage.setItem("lastDecision", JSON.stringify(payload));
+
+  // Redirect to Copilot for explanation
+  window.location.href = "/copilot/";
 }
 </script>
 

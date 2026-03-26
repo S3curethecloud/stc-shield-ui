@@ -56,6 +56,14 @@ async function runCopilot() {
 
     const result = await res.json();
 
+    // 🔥 STORE GRAPH CONTEXT FOR SHIELD
+    if (result.graph_context && result.graph_context["controlplane.v1"]) {
+      localStorage.setItem(
+        "shieldGraph",
+        JSON.stringify(result.graph_context["controlplane.v1"])
+      );
+    }
+
     container.innerHTML = `
       <h3>Copilot Response</h3>
       <p><strong>Explanation:</strong> ${result.explanation || "No explanation"}</p>
