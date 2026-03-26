@@ -31,16 +31,20 @@
 </main>
 
 <script>
+
 async function runCopilot() {
+  const container = document.getElementById("copilot-output");
+
+  // 1. Get decision from Shield
   const data = JSON.parse(localStorage.getItem("lastDecision"));
 
   if (!data) {
-    document.getElementById("copilot-output").innerHTML =
-      "<p>No decision data available</p>";
+    container.innerHTML = "<p>No decision data available</p>";
     return;
   }
 
   try {
+    // 2. Call REAL Copilot API (FIXED ENDPOINT)
     const res = await fetch("https://stc-intelligence-core.fly.dev/ask/explain", {
       method: "POST",
       headers: {
@@ -48,25 +52,34 @@ async function runCopilot() {
       },
       body: JSON.stringify({
         question: "Explain this decision",
-        context: data,
-        mode: "copilot"
+        context: data
       })
     });
 
     const result = await res.json();
 
-    document.getElementById("copilot-output").innerHTML = `
+    // 3. Render structured response
+    container.innerHTML = `
       <h3>Copilot Response</h3>
-      <p>${result.answer || "No explanation returned"}</p>
+      <p><strong>Explanation:</strong> ${result.explanation || "No explanation"}</p>
+
+      <div style="margin-top:10px;">
+        <strong>Result:</strong>
+        <pre>${JSON.stringify(result.result, null, 2)}</pre>
+      </div>
+
+      <div style="margin-top:10px;">
+        <strong>Source:</strong> ${result.source || "unknown"}
+      </div>
     `;
 
   } catch (err) {
-    document.getElementById("copilot-output").innerHTML =
-      `<p>Error: ${err.message}</p>`;
+    container.innerHTML = `<p>Error: ${err.message}</p>`;
   }
 }
 
 runCopilot();
+
 </script>
 
 </body>
