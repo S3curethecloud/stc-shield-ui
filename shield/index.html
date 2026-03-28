@@ -93,7 +93,6 @@
       <div class="card">
         <h3>Intelligence</h3>
 
-        <!-- 🔥 RIGHT PANEL STRUCTURE -->
         <div id="intelligence-panel">
           <div id="riskdna-panel"></div>
           <div id="copilot-panel"></div>
@@ -113,6 +112,37 @@
 </footer>
 
 <script>
+
+function computeRiskDNA(finding) {
+  let score = 0;
+  let signals = [];
+
+  if (finding.title?.toLowerCase().includes("privilege")) {
+    score += 40;
+    signals.push("privilege_escalation");
+  }
+
+  if (finding.title?.toLowerCase().includes("cross-account")) {
+    score += 30;
+    signals.push("cross_account_trust");
+  }
+
+  if (finding.title?.toLowerCase().includes("refund")) {
+    score += 20;
+    signals.push("financial_anomaly");
+  }
+
+  if (finding.severity === "CRITICAL") score += 30;
+  if (finding.severity === "HIGH") score += 20;
+
+  score = Math.min(score, 100);
+
+  return {
+    score,
+    signals,
+    confidence: "DETERMINISTIC"
+  };
+}
 
 function renderSummary(graph) {
   const el = document.getElementById("graph-summary");
@@ -283,13 +313,15 @@ function animatePaths(paths, positions, container) {
 function renderRiskDNA(data) {
   const el = document.getElementById("riskdna-panel");
 
+  const computed = computeRiskDNA(data);
+
   el.innerHTML = `
     <div class="panel">
       <h3>RiskDNA</h3>
-      <p><strong>Score:</strong> ${data.risk_score || "N/A"}</p>
+      <p><strong>Score:</strong> ${computed.score}</p>
       <p><strong>Signals:</strong></p>
       <ul>
-        ${(data.signals || []).map(s => `<li>${s}</li>`).join("")}
+        ${computed.signals.map(s => `<li>${s}</li>`).join("")}
       </ul>
     </div>
   `;

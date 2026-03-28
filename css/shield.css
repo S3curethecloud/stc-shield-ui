@@ -78,3 +78,15 @@ body {
 #findings-list li:hover {
   color: #00ffd0;
 }
+
+#intelligence-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: rgba(20,30,50,0.6);
+  padding: 16px;
+  border-radius: 10px;
+}
