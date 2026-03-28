@@ -91,13 +91,19 @@ function selectFinding(type) {
     `;
 
     payload = {
-      principal: "agent-demo",
-      intent: "role:escalate",
+      question: "Explain this decision",
       context: {
-        device_trust: false,
-        session_binding: "device-x",
-        after_hours: true
-      }
+        incident: {
+          incident_id: "INC-PRIV-001",
+          severity: "HIGH",
+          signals: ["privilege_escalation", "admin_policy", "full_access"],
+          risk_score: 85,
+          business_impact: "privilege escalation risk",
+          recommended_control: "restrict_role_policy"
+        }
+      },
+      mode: "copilot",
+      source: "shield"
     };
   }
 
@@ -112,13 +118,19 @@ function selectFinding(type) {
     `;
 
     payload = {
-      principal: "agent-demo",
-      intent: "assume:role",
+      question: "Explain this decision",
       context: {
-        device_trust: true,
-        session_binding: "device-y",
-        after_hours: false
-      }
+        incident: {
+          incident_id: "INC-XACC-001",
+          severity: "MEDIUM",
+          signals: ["cross_account_access", "trust_chain"],
+          risk_score: 60,
+          business_impact: "expanded blast radius",
+          recommended_control: "limit_trust_policy"
+        }
+      },
+      mode: "copilot",
+      source: "shield"
     };
   }
 
@@ -133,20 +145,26 @@ function selectFinding(type) {
     `;
 
     payload = {
-      principal: "agent-demo",
-      intent: "refund:create",
+      question: "Explain this decision",
       context: {
-        device_trust: true,
-        session_binding: "device-demo",
-        after_hours: false
-      }
+        incident: {
+          incident_id: "INC-REFUND-001",
+          severity: "CRITICAL",
+          signals: ["after_hours", "new_device", "refund_attempt"],
+          risk_score: 94,
+          business_impact: "refund risk",
+          recommended_control: "step_up_auth"
+        }
+      },
+      mode: "copilot",
+      source: "shield"
     };
   }
 
   // Persist finding
   localStorage.setItem("selectedFinding", JSON.stringify(payload));
 
-  // 🔥 OPTIONAL UX ENHANCEMENT — DIRECT COPILOT HANDOFF
+  // 🔥 COPILOT HANDOFF (DETERMINISTIC INCIDENT ENVELOPE)
   localStorage.setItem("lastDecision", JSON.stringify(payload));
 
   // Redirect to Copilot for explanation
