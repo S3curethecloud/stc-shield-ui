@@ -31,14 +31,55 @@
 </main>
 
 <script>
+
+function computeRiskDNA(finding) {
+  let score = 0;
+  let signals = [];
+
+  if (finding.title?.toLowerCase().includes("privilege")) {
+    score += 40;
+    signals.push("privilege_escalation");
+  }
+
+  if (finding.title?.toLowerCase().includes("cross-account")) {
+    score += 30;
+    signals.push("cross_account_trust");
+  }
+
+  if (finding.title?.toLowerCase().includes("refund")) {
+    score += 20;
+    signals.push("financial_anomaly");
+  }
+
+  if (finding.severity === "CRITICAL") score += 30;
+  if (finding.severity === "HIGH") score += 20;
+
+  score = Math.min(score, 100);
+
+  return {
+    score,
+    signals,
+    confidence: "DETERMINISTIC"
+  };
+}
+
 async function runCopilot() {
   const container = document.getElementById("copilot-output");
-  const data = JSON.parse(localStorage.getItem("lastDecision"));
 
-  if (!data) {
+  const finding = JSON.parse(localStorage.getItem("lastDecision"));
+
+  if (!finding) {
     container.innerHTML = "<p>No decision data available</p>";
     return;
   }
+
+  const risk = computeRiskDNA(finding);
+
+  const data = {
+    ...finding,
+    risk_score: risk.score,
+    signals: risk.signals
+  };
 
   try {
     const res = await fetch("https://stc-intelligence-core.fly.dev/copilot/bridge/controlplane", {
@@ -56,7 +97,6 @@ async function runCopilot() {
 
     const result = await res.json();
 
-    // 🔥 STORE GRAPH CONTEXT FOR SHIELD
     if (result.graph_context && result.graph_context["controlplane.v1"]) {
       localStorage.setItem(
         "shieldGraph",
@@ -94,6 +134,7 @@ async function runCopilot() {
 }
 
 runCopilot();
+
 </script>
 
 </body>
