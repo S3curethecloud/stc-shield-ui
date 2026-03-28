@@ -68,6 +68,20 @@
           overflow: hidden;
           margin-top: 20px;
         "></div>
+
+        <!-- 🔥 NODE ANALYSIS PANEL (ADDED) -->
+        <div id="node-analysis" style="
+          margin-top:20px;
+          padding:15px;
+          background:#020617;
+          border-radius:10px;
+          color:#fff;
+          min-height:80px;
+        ">
+          <strong>Node Analysis</strong>
+          <div id="node-output">Click a node to analyze</div>
+        </div>
+
       </div>
     </section>
 
@@ -211,9 +225,7 @@ function renderGraph(graph) {
     el.onmouseenter = () => showTooltip(node);
     el.onmouseleave = hideTooltip;
 
-    el.onclick = () => {
-      alert(`Deep analysis for: ${node}`);
-    };
+    el.onclick = () => runNodeAnalysis(node, graph);
 
     container.appendChild(el);
   });
@@ -264,6 +276,42 @@ function animatePaths(paths, positions, container) {
       delay += 400;
     }
   });
+}
+
+async function runNodeAnalysis(node, graph) {
+  const output = document.getElementById("node-output");
+
+  output.innerHTML = "Analyzing node...";
+
+  try {
+    const res = await fetch("https://stc-intelligence-core.fly.dev/copilot/bridge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question: `Explain the role of ${node} in this attack path`,
+        context: {
+          node: node,
+          graph: graph,
+          signals: graph.signals,
+          paths: graph.paths
+        },
+        mode: "copilot",
+        source: "shield"
+      })
+    });
+
+    const result = await res.json();
+
+    output.innerHTML = `
+      <strong>${node}</strong><br><br>
+      ${result.explanation || "No explanation available"}
+    `;
+
+  } catch (err) {
+    output.innerHTML = `Error: ${err.message}`;
+  }
 }
 
 function loadGraphFromCopilot() {
