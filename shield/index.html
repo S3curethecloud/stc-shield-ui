@@ -51,6 +51,17 @@
         <div id="canvas-output" class="muted">
           Select a finding to visualize attack path
         </div>
+
+        <!-- 🔥 GRAPH CANVAS (ADDED) -->
+        <div id="graph-container" style="
+          position: relative;
+          width: 100%;
+          height: 500px;
+          background: #0b1220;
+          border-radius: 12px;
+          overflow: hidden;
+          margin-top: 20px;
+        "></div>
       </div>
     </section>
 
@@ -74,6 +85,122 @@
 </footer>
 
 <script>
+
+function renderGraph(graph) {
+  const container = document.getElementById("graph-container");
+  container.innerHTML = "";
+
+  const nodes = graph.nodes_visited;
+  const edges = graph.edges_traversed;
+
+  const positions = {};
+
+  const radius = 180;
+  const centerX = 300;
+  const centerY = 250;
+
+  nodes.forEach((node, i) => {
+    const angle = (i / nodes.length) * 2 * Math.PI;
+
+    positions[node] = {
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle)
+    };
+  });
+
+  edges.forEach(edge => {
+    const from = positions[edge.from];
+    const to = positions[edge.to];
+
+    const line = document.createElement("div");
+
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    line.style.position = "absolute";
+    line.style.width = `${length}px`;
+    line.style.height = "2px";
+    line.style.background = "#555";
+    line.style.left = `${from.x}px`;
+    line.style.top = `${from.y}px`;
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.transformOrigin = "0 0";
+
+    container.appendChild(line);
+  });
+
+  nodes.forEach(node => {
+    const pos = positions[node];
+
+    const el = document.createElement("div");
+    el.className = "node";
+    el.innerText = node;
+
+    el.style.position = "absolute";
+    el.style.left = `${pos.x - 40}px`;
+    el.style.top = `${pos.y - 20}px`;
+    el.style.padding = "6px 10px";
+    el.style.background = "#1e293b";
+    el.style.color = "#fff";
+    el.style.borderRadius = "6px";
+    el.style.fontSize = "12px";
+    el.style.textAlign = "center";
+
+    container.appendChild(el);
+  });
+
+  animatePaths(graph.paths, positions, container);
+}
+
+function animatePaths(paths, positions, container) {
+  let delay = 0;
+
+  paths.forEach(pathObj => {
+    const path = pathObj.path;
+
+    for (let i = 0; i < path.length - 1; i++) {
+      const from = positions[path[i]];
+      const to = positions[path[i + 1]];
+
+      setTimeout(() => {
+        const line = document.createElement("div");
+
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+        line.style.position = "absolute";
+        line.style.width = `${length}px`;
+        line.style.height = "3px";
+        line.style.background = "#00ffd0";
+        line.style.left = `${from.x}px`;
+        line.style.top = `${from.y}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+        line.style.transformOrigin = "0 0";
+        line.style.boxShadow = "0 0 8px #00ffd0";
+
+        container.appendChild(line);
+      }, delay);
+
+      delay += 400;
+    }
+  });
+}
+
+function loadGraphFromCopilot() {
+  const graph = JSON.parse(localStorage.getItem("shieldGraph"));
+  if (!graph) return;
+
+  renderGraph(graph);
+}
+
+window.addEventListener("load", loadGraphFromCopilot);
+
+
 function selectFinding(type) {
   const canvas = document.getElementById("canvas-output");
   const context = document.getElementById("context-output");
@@ -161,13 +288,9 @@ function selectFinding(type) {
     };
   }
 
-  // Persist finding
   localStorage.setItem("selectedFinding", JSON.stringify(payload));
-
-  // 🔥 COPILOT HANDOFF (DETERMINISTIC INCIDENT ENVELOPE)
   localStorage.setItem("lastDecision", JSON.stringify(payload));
 
-  // Redirect to Copilot for explanation
   window.location.href = "/copilot/";
 }
 </script>
