@@ -52,6 +52,11 @@
           Select a finding to visualize attack path
         </div>
 
+        <!-- 🔥 LEGEND -->
+        <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
+          🔴 Critical | 🟠 Signal Influence | 🟢 Control Layer
+        </div>
+
         <div id="graph-summary" style="
           padding:10px;
           background:#0f172a;
@@ -69,7 +74,6 @@
           margin-top: 20px;
         "></div>
 
-        <!-- 🔥 NODE ANALYSIS PANEL (ADDED) -->
         <div id="node-analysis" style="
           margin-top:20px;
           padding:15px;
@@ -106,36 +110,6 @@
 
 <script>
 
-function showTooltip(node) {
-  let tooltip = document.getElementById("tooltip");
-
-  if (!tooltip) {
-    tooltip = document.createElement("div");
-    tooltip.id = "tooltip";
-    tooltip.style.position = "fixed";
-    tooltip.style.background = "#111";
-    tooltip.style.color = "#fff";
-    tooltip.style.padding = "6px 10px";
-    tooltip.style.borderRadius = "6px";
-    tooltip.style.fontSize = "12px";
-    tooltip.style.zIndex = 9999;
-    document.body.appendChild(tooltip);
-  }
-
-  tooltip.innerText = `Node: ${node}`;
-  tooltip.style.display = "block";
-
-  document.onmousemove = e => {
-    tooltip.style.left = e.pageX + 10 + "px";
-    tooltip.style.top = e.pageY + 10 + "px";
-  };
-}
-
-function hideTooltip() {
-  const tooltip = document.getElementById("tooltip");
-  if (tooltip) tooltip.style.display = "none";
-}
-
 function renderSummary(graph) {
   const el = document.getElementById("graph-summary");
 
@@ -170,6 +144,26 @@ function renderGraph(graph) {
     };
   });
 
+  // 🔥 NODE INTELLIGENCE MAP
+  const nodeInsights = {};
+
+  graph.paths.forEach(p => {
+    p.path.forEach((node, idx) => {
+      if (!nodeInsights[node]) {
+        nodeInsights[node] = {
+          signals: [],
+          isCritical: false
+        };
+      }
+
+      nodeInsights[node].signals.push(p.signal);
+
+      if (idx === p.path.length - 1) {
+        nodeInsights[node].isCritical = true;
+      }
+    });
+  });
+
   edges.forEach(edge => {
     const from = positions[edge.from];
     const to = positions[edge.to];
@@ -179,7 +173,6 @@ function renderGraph(graph) {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const length = Math.sqrt(dx * dx + dy * dy);
-
     const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
     line.style.position = "absolute";
@@ -194,36 +187,45 @@ function renderGraph(graph) {
     container.appendChild(line);
   });
 
-  const riskNodes = ["blast_radius_model", "privilege_boundary"];
-
   nodes.forEach(node => {
     const pos = positions[node];
+    const insight = nodeInsights[node] || {};
 
     const el = document.createElement("div");
-    el.innerText = node;
 
-    let color = "#1e293b";
+    el.innerHTML = `
+      <div style="font-size:11px;font-weight:bold;">${node}</div>
+      <div style="font-size:10px;color:#94a3b8;">
+        ${insight.signals ? insight.signals.join(", ") : ""}
+      </div>
+      <div style="font-size:10px;color:#22c55e;">
+        ${insight.isCritical ? "CRITICAL" : ""}
+      </div>
+    `;
 
-    if (riskNodes.includes(node)) {
-      color = "#ff4d4d";
+    let bg = "#1e293b";
+
+    if (insight.isCritical) {
+      bg = "#ff4d4d";
+    } else if (insight.signals && insight.signals.length > 0) {
+      bg = "#f59e0b";
     } else if (node.includes("policy") || node.includes("governance")) {
-      color = "#00ffd0";
-    } else {
-      color = "#334155";
+      bg = "#00ffd0";
     }
 
     el.style.position = "absolute";
-    el.style.left = `${pos.x - 40}px`;
-    el.style.top = `${pos.y - 20}px`;
-    el.style.padding = "6px 10px";
-    el.style.background = color;
+    el.style.left = `${pos.x - 50}px`;
+    el.style.top = `${pos.y - 30}px`;
+    el.style.padding = "8px";
+    el.style.background = bg;
     el.style.color = "#fff";
-    el.style.borderRadius = "6px";
-    el.style.fontSize = "12px";
-    el.style.cursor = "pointer";
-
-    el.onmouseenter = () => showTooltip(node);
-    el.onmouseleave = hideTooltip;
+    el.style.borderRadius = "8px";
+    el.style.width = "100px";
+    el.style.textAlign = "center";
+    el.style.fontSize = "11px";
+    el.style.boxShadow = insight.isCritical
+      ? "0 0 20px rgba(255,77,77,0.8)"
+      : "0 0 8px rgba(0,0,0,0.5)";
 
     el.onclick = () => runNodeAnalysis(node, graph);
 
@@ -239,6 +241,12 @@ function animatePaths(paths, positions, container) {
   paths.forEach(pathObj => {
     const path = pathObj.path;
 
+    const isCriticalPath =
+      pathObj.signal.includes("after_hours") ||
+      pathObj.signal.includes("refund");
+
+    let color = isCriticalPath ? "#ff4d4d" : "#00ffd0";
+
     for (let i = 0; i < path.length - 1; i++) {
       const from = positions[path[i]];
       const to = positions[path[i + 1]];
@@ -250,15 +258,6 @@ function animatePaths(paths, positions, container) {
         const dy = to.y - from.y;
         const length = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-        let color = "#00ffd0";
-
-        if (pathObj.signal.includes("after_hours")) {
-          color = "#ff4d4d";
-        }
-        if (pathObj.signal.includes("refund")) {
-          color = "#ffa500";
-        }
 
         line.style.position = "absolute";
         line.style.width = `${length}px`;
@@ -330,80 +329,15 @@ function selectFinding(type) {
 
   let payload = {};
 
-  if (type === "privilege") {
-    canvas.innerHTML = `
-      <pre>User → IAM Role → Admin Policy → Full Access</pre>
-    `;
-
-    context.innerHTML = `
-      <p><strong>Risk:</strong> High</p>
-      <p>Privilege escalation path detected.</p>
-    `;
-
-    payload = {
-      question: "Explain this decision",
-      context: {
-        incident: {
-          incident_id: "INC-PRIV-001",
-          severity: "HIGH",
-          signals: ["privilege_escalation", "admin_policy", "full_access"],
-          risk_score: 85,
-          business_impact: "privilege escalation risk",
-          recommended_control: "restrict_role_policy"
-        }
-      },
-      mode: "copilot",
-      source: "shield"
-    };
-  }
-
-  if (type === "cross-account") {
-    canvas.innerHTML = `
-      <pre>Account A → Trust → Account B → Sensitive Resource</pre>
-    `;
-
-    context.innerHTML = `
-      <p><strong>Risk:</strong> Medium</p>
-      <p>Cross-account access expands blast radius.</p>
-    `;
-
-    payload = {
-      question: "Explain this decision",
-      context: {
-        incident: {
-          incident_id: "INC-XACC-001",
-          severity: "MEDIUM",
-          signals: ["cross_account_access", "trust_chain"],
-          risk_score: 60,
-          business_impact: "expanded blast radius",
-          recommended_control: "limit_trust_policy"
-        }
-      },
-      mode: "copilot",
-      source: "shield"
-    };
-  }
-
   if (type === "refund") {
-    canvas.innerHTML = `
-      <pre>Agent → Refund API → Payment DB → Ledger</pre>
-    `;
-
-    context.innerHTML = `
-      <p><strong>Risk:</strong> Critical</p>
-      <p>Financial blast radius detected.</p>
-    `;
-
     payload = {
       question: "Explain this decision",
       context: {
         incident: {
           incident_id: "INC-REFUND-001",
           severity: "CRITICAL",
-          signals: ["after_hours", "new_device", "refund_attempt"],
-          risk_score: 94,
-          business_impact: "refund risk",
-          recommended_control: "step_up_auth"
+          signals: ["after_hours", "refund_attempt"],
+          risk_score: 94
         }
       },
       mode: "copilot",
