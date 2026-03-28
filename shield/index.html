@@ -309,34 +309,39 @@ function animatePaths(paths, positions, container) {
   });
 }
 
-function renderRiskDNA(finding) {
+function renderRiskDNA(data) {
   const el = document.getElementById("riskdna-panel");
 
-  const risk = computeRiskDNA(finding);
+  const computed = computeRiskDNA(data);
 
   el.innerHTML = `
     <div class="panel">
       <h3>RiskDNA</h3>
-
-      <p>
-        <strong>Score:</strong> 
-        <span style="color:${risk.score > 80 ? 'red' : risk.score > 50 ? 'orange' : 'green'}">
-          ${risk.score}
-        </span>
-      </p>
-
-      <p><strong>Confidence:</strong> ${risk.confidence}</p>
-
+      <p><strong>Score:</strong> ${computed.score}</p>
       <p><strong>Signals:</strong></p>
       <ul>
-        ${risk.signals.map(s => `<li>${s}</li>`).join("")}
+        ${computed.signals.map(s => `<li>${s}</li>`).join("")}
       </ul>
     </div>
   `;
 }
 
 async function runCopilot() {
-  const data = JSON.parse(localStorage.getItem("lastDecision"));
+  const finding = JSON.parse(localStorage.getItem("lastDecision"));
+
+  if (!finding) {
+    document.getElementById("copilot-panel").innerHTML =
+      "<p>No decision data available</p>";
+    return;
+  }
+
+  const risk = computeRiskDNA(finding);
+
+  const data = {
+    ...finding,
+    risk_score: risk.score,
+    signals: risk.signals
+  };
 
   const el = document.getElementById("copilot-panel");
 
@@ -409,7 +414,6 @@ function loadGraphFromCopilot() {
 }
 
 window.addEventListener("load", loadGraphFromCopilot);
-
 
 async function selectFinding(finding) {
   localStorage.setItem("lastDecision", JSON.stringify(finding));
