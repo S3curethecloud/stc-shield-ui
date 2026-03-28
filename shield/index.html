@@ -48,9 +48,6 @@
     <section>
       <div class="card">
         <h3>Main Canvas</h3>
-        <div id="canvas-output" class="muted">
-          Select a finding to visualize attack path
-        </div>
 
         <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
           🔴 Critical | 🟠 Signal Influence | 🟢 Control Layer
@@ -83,6 +80,12 @@
         ">
           <strong>Node Analysis</strong>
           <div id="node-output">Click a node to analyze</div>
+        </div>
+
+        <!-- 🔥 NEW: BLAST RADIUS PANEL -->
+        <div id="blast-radius-panel" class="panel">
+          <h3>Blast Radius Simulation</h3>
+          <div id="blast-content">No simulation yet</div>
         </div>
 
       </div>
@@ -143,27 +146,43 @@ function computeRiskDNA(finding) {
   };
 }
 
-/* 🔥 NEW: RISK PROPAGATION ENGINE */
-function propagateRisk(graph, baseRisk) {
-  const nodeRisk = {};
+function computeBlastRadius(graph, risk) {
+  if (!graph) return null;
 
-  graph.nodes_visited.forEach(node => {
-    nodeRisk[node] = baseRisk;
-  });
+  const impacted = graph.nodes_visited || [];
 
-  graph.edges_traversed.forEach(edge => {
-    const fromRisk = nodeRisk[edge.from] || baseRisk;
+  return {
+    total_nodes: impacted.length,
+    critical_nodes: impacted.filter(n => n.includes("policy") || n.includes("privilege")),
+    domains: graph.governance_domains || [],
+    spread_score: Math.min(100, risk.score + impacted.length * 2)
+  };
+}
 
-    let propagated = fromRisk * 0.8;
+function renderBlastRadius(graph, risk) {
+  const el = document.getElementById("blast-content");
 
-    if (edge.to.includes("privilege") || edge.to.includes("boundary")) {
-      propagated += 10;
-    }
+  const blast = computeBlastRadius(graph, risk);
 
-    nodeRisk[edge.to] = Math.min(100, Math.max(nodeRisk[edge.to] || 0, propagated));
-  });
+  if (!blast) {
+    el.innerHTML = "<p>No graph data</p>";
+    return;
+  }
 
-  return nodeRisk;
+  el.innerHTML = `
+    <p><strong>Spread Score:</strong> ${blast.spread_score}</p>
+    <p><strong>Nodes Impacted:</strong> ${blast.total_nodes}</p>
+
+    <p><strong>Critical Nodes:</strong></p>
+    <ul>
+      ${blast.critical_nodes.map(n => `<li>${n}</li>`).join("")}
+    </ul>
+
+    <p><strong>Governance Domains:</strong></p>
+    <ul>
+      ${blast.domains.map(d => `<li>${d}</li>`).join("")}
+    </ul>
+  `;
 }
 
 function renderSummary(graph) {
@@ -181,9 +200,6 @@ function renderGraph(graph) {
   container.innerHTML = "";
 
   renderSummary(graph);
-
-  const baseRisk = JSON.parse(localStorage.getItem("lastDecision"))?.risk_score || 50;
-  const nodeRiskMap = propagateRisk(graph, baseRisk);
 
   const nodes = graph.nodes_visited;
   const edges = graph.edges_traversed;
@@ -227,47 +243,28 @@ function renderGraph(graph) {
 
   nodes.forEach(node => {
     const pos = positions[node];
-    const riskValue = nodeRiskMap[node] || 0;
-
-    let bg = "#1e293b";
-
-    if (riskValue > 80) {
-      bg = "#ff4d4d";
-    } else if (riskValue > 50) {
-      bg = "#f59e0b";
-    } else {
-      bg = "#22c55e";
-    }
 
     const el = document.createElement("div");
 
-    el.innerHTML = `
-      <div style="font-size:11px;font-weight:bold;">${node}</div>
-      <div style="font-size:10px;">Risk: ${Math.round(riskValue)}</div>
-    `;
+    el.innerHTML = `<div>${node}</div>`;
 
     el.style.position = "absolute";
     el.style.left = `${pos.x - 50}px`;
     el.style.top = `${pos.y - 30}px`;
     el.style.padding = "8px";
-    el.style.background = bg;
+    el.style.background = "#22c55e";
     el.style.color = "#fff";
     el.style.borderRadius = "8px";
-    el.style.width = "100px";
-    el.style.textAlign = "center";
-    el.style.fontSize = "11px";
 
     el.onclick = () => runNodeAnalysis(node, graph);
 
     container.appendChild(el);
   });
 
-  animatePaths(graph.paths, positions, container, nodeRiskMap);
+  animatePaths(graph.paths, positions, container);
 }
 
-function animatePaths(paths, positions, container, nodeRiskMap) {
-  let delay = 0;
-
+function animatePaths(paths, positions, container) {
   paths.forEach(pathObj => {
     const path = pathObj.path;
 
@@ -275,34 +272,22 @@ function animatePaths(paths, positions, container, nodeRiskMap) {
       const from = positions[path[i]];
       const to = positions[path[i + 1]];
 
-      const fromRisk = nodeRiskMap[path[i]];
-      const toRisk = nodeRiskMap[path[i + 1]];
+      const line = document.createElement("div");
 
-      const isCritical = fromRisk > 80 || toRisk > 80;
-      let color = isCritical ? "#ff4d4d" : "#00ffd0";
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-      setTimeout(() => {
-        const line = document.createElement("div");
+      line.style.position = "absolute";
+      line.style.width = `${length}px`;
+      line.style.height = "3px";
+      line.style.background = "#00ffd0";
+      line.style.left = `${from.x}px`;
+      line.style.top = `${from.y}px`;
+      line.style.transform = `rotate(${angle}deg)`;
 
-        const dx = to.x - from.x;
-        const dy = to.y - from.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-        line.style.position = "absolute";
-        line.style.width = `${length}px`;
-        line.style.height = "3px";
-        line.style.background = color;
-        line.style.left = `${from.x}px`;
-        line.style.top = `${from.y}px`;
-        line.style.transform = `rotate(${angle}deg)`;
-        line.style.transformOrigin = "0 0";
-        line.style.boxShadow = `0 0 10px ${color}`;
-
-        container.appendChild(line);
-      }, delay);
-
-      delay += 400;
+      container.appendChild(line);
     }
   });
 }
@@ -316,30 +301,13 @@ function renderRiskDNA(data) {
     <div class="panel">
       <h3>RiskDNA</h3>
       <p><strong>Score:</strong> ${computed.score}</p>
-      <p><strong>Signals:</strong></p>
-      <ul>
-        ${computed.signals.map(s => `<li>${s}</li>`).join("")}
-      </ul>
     </div>
   `;
 }
 
 async function runCopilot() {
   const finding = JSON.parse(localStorage.getItem("lastDecision"));
-
-  if (!finding) {
-    document.getElementById("copilot-panel").innerHTML =
-      "<p>No decision data available</p>";
-    return;
-  }
-
   const risk = computeRiskDNA(finding);
-
-  const data = {
-    ...finding,
-    risk_score: risk.score,
-    signals: risk.signals
-  };
 
   const el = document.getElementById("copilot-panel");
 
@@ -351,75 +319,50 @@ async function runCopilot() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(finding)
     });
 
     const result = await res.json();
 
-    el.innerHTML = `
-      <div class="panel">
-        <h3>Copilot</h3>
-        <p>${result.explanation || "No explanation available"}</p>
-      </div>
-    `;
+    el.innerHTML = `<p>${result.explanation}</p>`;
+
+    const graph = JSON.parse(localStorage.getItem("shieldGraph"));
+    renderBlastRadius(graph, risk);
 
   } catch (err) {
     el.innerHTML = `Error: ${err.message}`;
   }
 }
 
-async function runNodeAnalysis(node, graph) {
-  const output = document.getElementById("node-output");
+async function selectFinding(key) {
 
-  output.innerHTML = "Analyzing node...";
+  const graph = {
+    title: key,
+    severity: "HIGH",
+    nodes_visited: ["operational_policy","identity_governance","privilege_boundary"],
+    edges_traversed: [
+      { from: "operational_policy", to: "identity_governance" },
+      { from: "identity_governance", to: "privilege_boundary" }
+    ],
+    paths: [
+      {
+        path: ["operational_policy","identity_governance","privilege_boundary"],
+        signal: key
+      }
+    ],
+    signals: [key],
+    start_nodes: ["operational_policy"],
+    confidence: "DETERMINISTIC"
+  };
 
-  try {
-    const res = await fetch("https://stc-intelligence-core.fly.dev/copilot/bridge", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        question: `Explain the role of ${node} in this attack path`,
-        context: {
-          node: node,
-          graph: graph,
-          signals: graph.signals,
-          paths: graph.paths
-        },
-        mode: "copilot",
-        source: "shield"
-      })
-    });
-
-    const result = await res.json();
-
-    output.innerHTML = `
-      <strong>${node}</strong><br><br>
-      ${result.explanation || "No explanation available"}
-    `;
-
-  } catch (err) {
-    output.innerHTML = `Error: ${err.message}`;
-  }
-}
-
-function loadGraphFromCopilot() {
-  const graph = JSON.parse(localStorage.getItem("shieldGraph"));
-  if (!graph) return;
+  localStorage.setItem("lastDecision", JSON.stringify(graph));
+  localStorage.setItem("shieldGraph", JSON.stringify(graph));
 
   renderGraph(graph);
-}
-
-window.addEventListener("load", loadGraphFromCopilot);
-
-async function selectFinding(finding) {
-  localStorage.setItem("lastDecision", JSON.stringify(finding));
-
-  renderGraph(finding);
-  renderRiskDNA(finding);
+  renderRiskDNA(graph);
   await runCopilot();
 }
+
 </script>
 
 </body>
