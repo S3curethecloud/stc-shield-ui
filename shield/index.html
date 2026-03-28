@@ -52,7 +52,6 @@
           Select a finding to visualize attack path
         </div>
 
-        <!-- 🔥 LEGEND -->
         <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
           🔴 Critical | 🟠 Signal Influence | 🟢 Control Layer
         </div>
@@ -310,18 +309,27 @@ function animatePaths(paths, positions, container) {
   });
 }
 
-function renderRiskDNA(data) {
+function renderRiskDNA(finding) {
   const el = document.getElementById("riskdna-panel");
 
-  const computed = computeRiskDNA(data);
+  const risk = computeRiskDNA(finding);
 
   el.innerHTML = `
     <div class="panel">
       <h3>RiskDNA</h3>
-      <p><strong>Score:</strong> ${computed.score}</p>
+
+      <p>
+        <strong>Score:</strong> 
+        <span style="color:${risk.score > 80 ? 'red' : risk.score > 50 ? 'orange' : 'green'}">
+          ${risk.score}
+        </span>
+      </p>
+
+      <p><strong>Confidence:</strong> ${risk.confidence}</p>
+
       <p><strong>Signals:</strong></p>
       <ul>
-        ${computed.signals.map(s => `<li>${s}</li>`).join("")}
+        ${risk.signals.map(s => `<li>${s}</li>`).join("")}
       </ul>
     </div>
   `;
