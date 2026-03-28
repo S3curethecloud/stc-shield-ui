@@ -143,6 +143,29 @@ function computeRiskDNA(finding) {
   };
 }
 
+/* 🔥 NEW: RISK PROPAGATION ENGINE */
+function propagateRisk(graph, baseRisk) {
+  const nodeRisk = {};
+
+  graph.nodes_visited.forEach(node => {
+    nodeRisk[node] = baseRisk;
+  });
+
+  graph.edges_traversed.forEach(edge => {
+    const fromRisk = nodeRisk[edge.from] || baseRisk;
+
+    let propagated = fromRisk * 0.8;
+
+    if (edge.to.includes("privilege") || edge.to.includes("boundary")) {
+      propagated += 10;
+    }
+
+    nodeRisk[edge.to] = Math.min(100, Math.max(nodeRisk[edge.to] || 0, propagated));
+  });
+
+  return nodeRisk;
+}
+
 function renderSummary(graph) {
   const el = document.getElementById("graph-summary");
 
@@ -159,11 +182,13 @@ function renderGraph(graph) {
 
   renderSummary(graph);
 
+  const baseRisk = JSON.parse(localStorage.getItem("lastDecision"))?.risk_score || 50;
+  const nodeRiskMap = propagateRisk(graph, baseRisk);
+
   const nodes = graph.nodes_visited;
   const edges = graph.edges_traversed;
 
   const positions = {};
-
   const radius = 180;
   const centerX = 300;
   const centerY = 250;
@@ -175,25 +200,6 @@ function renderGraph(graph) {
       x: centerX + radius * Math.cos(angle),
       y: centerY + radius * Math.sin(angle)
     };
-  });
-
-  const nodeInsights = {};
-
-  graph.paths.forEach(p => {
-    p.path.forEach((node, idx) => {
-      if (!nodeInsights[node]) {
-        nodeInsights[node] = {
-          signals: [],
-          isCritical: false
-        };
-      }
-
-      nodeInsights[node].signals.push(p.signal);
-
-      if (idx === p.path.length - 1) {
-        nodeInsights[node].isCritical = true;
-      }
-    });
   });
 
   edges.forEach(edge => {
@@ -221,29 +227,24 @@ function renderGraph(graph) {
 
   nodes.forEach(node => {
     const pos = positions[node];
-    const insight = nodeInsights[node] || {};
+    const riskValue = nodeRiskMap[node] || 0;
+
+    let bg = "#1e293b";
+
+    if (riskValue > 80) {
+      bg = "#ff4d4d";
+    } else if (riskValue > 50) {
+      bg = "#f59e0b";
+    } else {
+      bg = "#22c55e";
+    }
 
     const el = document.createElement("div");
 
     el.innerHTML = `
       <div style="font-size:11px;font-weight:bold;">${node}</div>
-      <div style="font-size:10px;color:#94a3b8;">
-        ${insight.signals ? insight.signals.join(", ") : ""}
-      </div>
-      <div style="font-size:10px;color:#22c55e;">
-        ${insight.isCritical ? "CRITICAL" : ""}
-      </div>
+      <div style="font-size:10px;">Risk: ${Math.round(riskValue)}</div>
     `;
-
-    let bg = "#1e293b";
-
-    if (insight.isCritical) {
-      bg = "#ff4d4d";
-    } else if (insight.signals && insight.signals.length > 0) {
-      bg = "#f59e0b";
-    } else if (node.includes("policy") || node.includes("governance")) {
-      bg = "#00ffd0";
-    }
 
     el.style.position = "absolute";
     el.style.left = `${pos.x - 50}px`;
@@ -255,33 +256,30 @@ function renderGraph(graph) {
     el.style.width = "100px";
     el.style.textAlign = "center";
     el.style.fontSize = "11px";
-    el.style.boxShadow = insight.isCritical
-      ? "0 0 20px rgba(255,77,77,0.8)"
-      : "0 0 8px rgba(0,0,0,0.5)";
 
     el.onclick = () => runNodeAnalysis(node, graph);
 
     container.appendChild(el);
   });
 
-  animatePaths(graph.paths, positions, container);
+  animatePaths(graph.paths, positions, container, nodeRiskMap);
 }
 
-function animatePaths(paths, positions, container) {
+function animatePaths(paths, positions, container, nodeRiskMap) {
   let delay = 0;
 
   paths.forEach(pathObj => {
     const path = pathObj.path;
 
-    const isCriticalPath =
-      pathObj.signal.includes("after_hours") ||
-      pathObj.signal.includes("refund");
-
-    let color = isCriticalPath ? "#ff4d4d" : "#00ffd0";
-
     for (let i = 0; i < path.length - 1; i++) {
       const from = positions[path[i]];
       const to = positions[path[i + 1]];
+
+      const fromRisk = nodeRiskMap[path[i]];
+      const toRisk = nodeRiskMap[path[i + 1]];
+
+      const isCritical = fromRisk > 80 || toRisk > 80;
+      let color = isCritical ? "#ff4d4d" : "#00ffd0";
 
       setTimeout(() => {
         const line = document.createElement("div");
