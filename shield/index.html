@@ -91,10 +91,14 @@
 
     <aside>
       <div class="card">
-        <h3>Context</h3>
-        <div id="context-output" class="muted">
-          Waiting for selection...
+        <h3>Intelligence</h3>
+
+        <!-- 🔥 RIGHT PANEL STRUCTURE -->
+        <div id="intelligence-panel">
+          <div id="riskdna-panel"></div>
+          <div id="copilot-panel"></div>
         </div>
+
       </div>
     </aside>
 
@@ -144,7 +148,6 @@ function renderGraph(graph) {
     };
   });
 
-  // 🔥 NODE INTELLIGENCE MAP
   const nodeInsights = {};
 
   graph.paths.forEach(p => {
@@ -277,6 +280,51 @@ function animatePaths(paths, positions, container) {
   });
 }
 
+function renderRiskDNA(data) {
+  const el = document.getElementById("riskdna-panel");
+
+  el.innerHTML = `
+    <div class="panel">
+      <h3>RiskDNA</h3>
+      <p><strong>Score:</strong> ${data.risk_score || "N/A"}</p>
+      <p><strong>Signals:</strong></p>
+      <ul>
+        ${(data.signals || []).map(s => `<li>${s}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+async function runCopilot() {
+  const data = JSON.parse(localStorage.getItem("lastDecision"));
+
+  const el = document.getElementById("copilot-panel");
+
+  el.innerHTML = "Running Copilot...";
+
+  try {
+    const res = await fetch("https://stc-intelligence-core.fly.dev/copilot/bridge", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    el.innerHTML = `
+      <div class="panel">
+        <h3>Copilot</h3>
+        <p>${result.explanation || "No explanation available"}</p>
+      </div>
+    `;
+
+  } catch (err) {
+    el.innerHTML = `Error: ${err.message}`;
+  }
+}
+
 async function runNodeAnalysis(node, graph) {
   const output = document.getElementById("node-output");
 
@@ -323,32 +371,12 @@ function loadGraphFromCopilot() {
 window.addEventListener("load", loadGraphFromCopilot);
 
 
-function selectFinding(type) {
-  const canvas = document.getElementById("canvas-output");
-  const context = document.getElementById("context-output");
+async function selectFinding(finding) {
+  localStorage.setItem("lastDecision", JSON.stringify(finding));
 
-  let payload = {};
-
-  if (type === "refund") {
-    payload = {
-      question: "Explain this decision",
-      context: {
-        incident: {
-          incident_id: "INC-REFUND-001",
-          severity: "CRITICAL",
-          signals: ["after_hours", "refund_attempt"],
-          risk_score: 94
-        }
-      },
-      mode: "copilot",
-      source: "shield"
-    };
-  }
-
-  localStorage.setItem("selectedFinding", JSON.stringify(payload));
-  localStorage.setItem("lastDecision", JSON.stringify(payload));
-
-  window.location.href = "/copilot/";
+  renderGraph(finding);
+  renderRiskDNA(finding);
+  await runCopilot();
 }
 </script>
 
